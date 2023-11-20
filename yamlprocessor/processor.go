@@ -71,7 +71,7 @@ func (tp *SimpleProcessor) Process(rawArtifact []byte, variablesClient func(stri
 		}
 	}
 	if len(missingVariables) > 0 {
-		return rawArtifact, err
+		return rawArtifact, &errMissingariables{missingVariables}
 	}
 
 	tmp, err = envsubst.Eval(tmp, func(s string) string {
@@ -82,6 +82,18 @@ func (tp *SimpleProcessor) Process(rawArtifact []byte, variablesClient func(stri
 		return rawArtifact, err
 	}
 	return []byte(tmp), err
+}
+
+type errMissingariables struct {
+	Missing []string
+}
+
+func (e *errMissingariables) Error() string {
+	sort.Strings(e.Missing)
+	return fmt.Sprintf(
+		"value for variables [%s] is not set. Please set the value using os environment variables or the clusterctl config file",
+		strings.Join(e.Missing, ", "),
+	)
 }
 
 var legacyVariableRegEx = regexp.MustCompile(`(\${(\s+([A-Za-z0-9_$]+)\s+)})|(\${(\s+([A-Za-z0-9_$]+))})|(\${(([A-Za-z0-9_$]+)\s+)})`)

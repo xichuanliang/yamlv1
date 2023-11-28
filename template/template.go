@@ -36,6 +36,7 @@ func (t *template) Objs() []unstructured.Unstructured {
 
 type TemplateInput struct {
 	RawArtifact     []byte
+	Env             map[string]string
 	Processor       yamlprocessor.Processor
 	TargetNamespace string
 }
@@ -48,6 +49,10 @@ func NewTemplate(input TemplateInput) (Template, error) {
 	variableMap, err := input.Processor.GetVariableMap(input.RawArtifact)
 	if err != nil {
 		return nil, err
+	}
+	for key, val := range input.Env {
+		v := val
+		variableMap[key] = &v
 	}
 	mapping := func(key string) (string, error) {
 		if variableMap[key] == nil {
